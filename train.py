@@ -59,11 +59,37 @@ config = Config()
 
 class VLMDataset(Dataset):
     def __init__(self, json_file_path, tokenizer, processor):
-        self.data = []
+        # 1. 原始数据加载
+        raw_data = []
         with open(json_file_path, 'r', encoding='utf-8') as f:
-            self.data = json.load(f)
+            raw_data = json.load(f)
+        
         self.tokenizer = tokenizer
         self.processor = processor
+        
+        # 2. 数据过滤：只保留图像文件真实存在的样本
+        self.data = []
+        invalid_count = 0
+        
+        print(f"开始加载数据集，原始样本数: {len(raw_data)}")
+        
+        for item in raw_data:
+            # 检查是否存在 "image" 字段
+            if "image" not in item or not item["image"]:
+                invalid_count += 1
+                continue # 跳过没有 "image" 字段的样本
+            
+            image_name = item["image"]
+            image_path = os.path.join(config.image_dir, image_name)
+            
+            # 检查文件是否存在
+            if os.path.exists(image_path):
+                self.data.append(item)
+            else:
+                invalid_count += 1
+             
+        print(f"数据集加载完成！有效样本数: {len(self.data)}, 已跳过无效样本数: {invalid_count}")
+
     def __len__(self):
         return len(self.data)
 

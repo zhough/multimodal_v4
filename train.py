@@ -47,9 +47,9 @@ class Config():
         self.dist_url = "env://"
         self.local_rank = -1
         
-        self.swanlab_project_name = 'multimodal_v2'
+        self.swanlab_project_name = 'multimodal_v4'
         self.image_dir = '/kaggle/input/coco-2017-dataset/coco2017/train2017/'
-        self.train_json_file = '/kaggle/working/multimodal/coco.json'
+        self.train_json_file = '/kaggle/input/multimodal-coco/coco.json'
         self.val_json_file = '/kaggle/working/multimodal/data_val.json'  
         self.latest_model = './output/model.pth'
         self.best_model = './output/best_model.pth'

@@ -231,9 +231,9 @@ def main(rank,world_size,config):
     image_processor = AutoImageProcessor.from_pretrained(vconfig.model_name)
 
     train_dataset = VLMDataset(config.train_json_file,tokenizer,image_processor)
-    val_dataset = VLMDataset(config.val_json_file,tokenizer,image_processor)
+    #val_dataset = VLMDataset(config.val_json_file,tokenizer,image_processor)
     train_sampler = DistributedSampler(train_dataset, shuffle=True)
-    val_sampler = DistributedSampler(val_dataset, shuffle=False)
+    #val_sampler = DistributedSampler(val_dataset, shuffle=False)
     train_dataloader = DataLoader(train_dataset,batch_size=config.batch_size,
                                   num_workers=4,sampler=train_sampler,pin_memory=True,drop_last=True)
     # val_dataloader = DataLoader(val_dataset,batch_size=config.batch_size,

@@ -18,7 +18,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
-
+import argparse
 
 # 初始化分布式环境
 def setup(rank, world_size):
@@ -51,7 +51,7 @@ class Config():
         self.image_dir = '/kaggle/input/coco-2017-dataset/coco2017/train2017/'
         self.train_json_file = '/kaggle/input/multimodal-coco/coco.json'
         self.val_json_file = '/kaggle/working/multimodal/data_val.json'  
-        self.latest_model = './output/model.pth'
+        self.save_model = './output/model.pth'
         self.best_model = './output/best_model.pth'
         self.trained_model = '/kaggle/input/vlm/transformers/default/1/model.pth'
 config = Config()
@@ -236,7 +236,7 @@ def train_epoch(model, tokenizer, dataloader, optimizer, scheduler, scaler, conf
                 f'step_loss': loss.item(),
             },step = config.step)
         if config.step % 1000 == 0 and rank == 0:
-            model_path = f'./output/steps/model.pth'
+            model_path = config.save_model
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             torch.save(model.state_dict(),model_path)
             print(f'成功保存当前最新模型参数到{model_path}') 
@@ -286,6 +286,20 @@ def main(rank,world_size,config):
     cleanup()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='多模态训练')
+    parser.add_argument('--learning_rate',type=float,default=config.learning_rate,help='学习率')
+    parser.add_argument('--epochs',type=int,default=config.epochs,help='epochs')
+    parser.add_argument('--swanlab_project_name',type=str,default=config.swanlab_project_name,help='swanlab项目名')
+    parser.add_argument('--image_dir',type=str,default=config.image_dir,help='训练图像文件夹路径')
+    parser.add_argument('--trained_model',type=str,default=config.trained_model,help='预训练模型路径')
+    parser.add_argument('--save_model',type=str,default=config.save_model,help='模型保存路径')
+    args = parser.parse_args()
+    for key, value in vars(args).items():
+        if hasattr(config, key):
+            setattr(config, key, value)
+        else:
+            setattr(config, key, value)
+            
     mp.spawn(
         main,
         args=(config.world_size, config),

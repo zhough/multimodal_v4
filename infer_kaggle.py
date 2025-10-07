@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description='多模态推理。')
     parser.add_argument('--image',type=str,default='/kaggle/working/multimodal/men4.jpg',help='图像路径')
     parser.add_argument('--model_path',type=str,default='/kaggle/input/vlm/transformers/default/1/model.pth',help='模型路径')
+    parser.add_argument('--max_new_tokens',type=int,default=512,help='最大输出tokens')
     args = parser.parse_args()
     # 移除所有权重键的 module. 前缀
     state_dict = torch.load(args.model_path, map_location=device)
@@ -56,7 +57,7 @@ def main():
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=128,  # 控制生成的最大长度
+            max_new_tokens=args.max_new_tokens,  # 控制生成的最大长度
             temperature=0.7,     # 控制生成的随机性
             do_sample=True,      # 启用采样，如果为 False，则使用贪心解码
             pad_token_id=tokenizer.pad_token_id,

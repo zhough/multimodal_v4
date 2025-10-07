@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--image',type=str,default='/kaggle/working/multimodal/men4.jpg',help='图像路径')
     parser.add_argument('--model_path',type=str,default='/kaggle/input/vlm/transformers/default/1/model.pth',help='模型路径')
     parser.add_argument('--max_new_tokens',type=int,default=512,help='最大输出tokens')
+    parser.add_argument('--prompt',type=str,default='describe this picture.',help='prompt')
     args = parser.parse_args()
     # 移除所有权重键的 module. 前缀
     state_dict = torch.load(args.model_path, map_location=device)
@@ -35,9 +36,9 @@ def main():
     image_processor = AutoImageProcessor.from_pretrained(vconfig.model_name)
 
     # 1. 准备文本提示
-    prompt = "describe this picture."
+    #prompt = "describe this picture."
     # Qwen 系列通常使用特定的聊天模板，最好用 tokenizer.apply_chat_template
-    messages = [{"role": "user", "content": prompt}]
+    messages = [{"role": "user", "content": args.prompt}]
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
     # 2. 准备图像

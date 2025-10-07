@@ -112,7 +112,8 @@ class VLMDataset(Dataset):
 # dataset = ConversationDataset("output_data.json", tokenizer)
 # dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=lambda x: x) # 简单的 collate_fn
 
-def init_model(tokenizer,trained_model=config.trained_model,rank=0,total_steps=1000):
+def init_model(tokenizer,config,trained_model=None,rank=0,total_steps=1000):
+    trained_model = config.trained_model
     lconfig = AutoConfig.from_pretrained(vconfig.llm)
     model = VLMModel(lconfig)
     model.to(rank)
@@ -267,7 +268,7 @@ def main(rank,world_size,config):
     total_steps = len(train_dataloader)*config.epochs
     if rank == 0:
         print(f'总训练步数:{total_steps}')
-    model, optimizer, scheduler, scaler = init_model(tokenizer=tokenizer,rank=rank,total_steps=total_steps)
+    model, optimizer, scheduler, scaler = init_model(tokenizer=tokenizer,config=config,rank=rank,total_steps=total_steps)
 
     # 开始训练
     print(f"开始训练")
@@ -299,7 +300,7 @@ if __name__ == "__main__":
             setattr(config, key, value)
         else:
             setattr(config, key, value)
-            
+
     mp.spawn(
         main,
         args=(config.world_size, config),

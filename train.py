@@ -4,7 +4,7 @@ from vision_config import VisionConfig
 import torch
 from torch.utils.data import Dataset,DataLoader
 vconfig = VisionConfig()
-from transformers import AutoImageProcessor,AutoTokenizer
+from transformers import AutoImageProcessor,AutoTokenizer,AutoModelForImageClassification
 from PIL import Image
 import torchvision.transforms as transforms
 import json
@@ -50,7 +50,7 @@ class Config():
         self.swanlab_project_name = 'multimodal_v4'
         self.image_dir = '/kaggle/input/coco-2017-dataset/coco2017/train2017/'
         self.train_json_file = '/kaggle/input/multimodal-coco/coco.json'
-        self.val_json_file = '/kaggle/working/multimodal/data_val.json'  
+        self.val_json_file = '/kaggle/working/multimodal_v4/data_val.json'  
         self.save_model = './output/model.pth'
         self.best_model = './output/best_model.pth'
         self.trained_model = '/kaggle/input/vlm/transformers/default/1/model.pth'
@@ -115,7 +115,8 @@ class VLMDataset(Dataset):
 def init_model(tokenizer,config,trained_model=None,rank=0,total_steps=1000):
     trained_model = config.trained_model
     lconfig = AutoConfig.from_pretrained(vconfig.llm)
-    model = VLMModel(lconfig)
+    vit_model = AutoModelForImageClassification.from_pretrained(vconfig.model_name)
+    model = VLMModel(lconfig,vit_model=vit_model)
     model.to(rank)
     if trained_model is None:
         llm = AutoModelForCausalLM.from_pretrained(vconfig.llm)
@@ -236,7 +237,7 @@ def train_epoch(model, tokenizer, dataloader, optimizer, scheduler, scaler, conf
             swanlab.log({
                 f'step_loss': loss.item(),
             },step = config.step)
-        if config.step % 1000 == 0 and rank == 0:
+        if config.step % 2000 == 0 and rank == 0:
             model_path = config.save_model
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             torch.save(model.state_dict(),model_path)

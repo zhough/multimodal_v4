@@ -1,5 +1,5 @@
 from model import VLMModel
-from transformers import AutoConfig,AutoImageProcessor,AutoTokenizer
+from transformers import AutoConfig,AutoImageProcessor,AutoTokenizer,AutoModelForImageClassification
 from vision_config import VisionConfig
 from tools import process_conversation
 from PIL import Image
@@ -9,12 +9,13 @@ vconfig = VisionConfig()
 llmconfig = AutoConfig.from_pretrained(vconfig.llm)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = VLMModel(llmconfig).to(device)
+vit_model = AutoModelForImageClassification.from_pretrained(vconfig.model_name)
+model = VLMModel(llmconfig,vit_model=vit_model).to(device)
 
 
 def main():
     parser = argparse.ArgumentParser(description='多模态推理。')
-    parser.add_argument('--image',type=str,default='/kaggle/working/multimodal/men4.jpg',help='图像路径')
+    parser.add_argument('--image',type=str,default='/kaggle/working/multimodal_v4/men4.jpg',help='图像路径')
     parser.add_argument('--model_path',type=str,default='/kaggle/input/vlm/transformers/default/1/model.pth',help='模型路径')
     parser.add_argument('--max_new_tokens',type=int,default=512,help='最大输出tokens')
     parser.add_argument('--prompt',type=str,default='describe this picture.',help='prompt')

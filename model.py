@@ -64,7 +64,7 @@ class CrossAttention(nn.Module):
 class CrossDecoderLayer(Qwen3DecoderLayer):
     def __init__(self, config, layer_idx):
         super().__init__(config, layer_idx)
-        self.v_hidden_size = 768
+        self.v_hidden_size = vconfig.v_hidden_size
         self.cross_attn = CrossAttention(v_hidden_size=self.v_hidden_size,l_hidden_size=self.hidden_size)
         self.cross_attention_layernorm =  Qwen3RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
     def forward(
@@ -195,10 +195,12 @@ class VLMModel(Qwen3ForCausalLM):
     # _tp_plan = {"lm_head": "colwise_rep"}
     # _pp_plan = {"lm_head": (["hidden_states"], ["logits"])}
 
-    def __init__(self, config):
+    def __init__(self, config,vit_model):
         super().__init__(config)
         self.model = MyQwen3Model(config)
-        self.vit_model = AutoModelForImageClassification.from_pretrained(vconfig.model_name)
+        self.vit_model = vit_model
+        self.num_layers = vconfig.num_layers
+        self.hidden_states_proj = nn.Linear(vconfig.v_hidden_size*self.num_layers,vconfig.v_hidden_size)
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -215,8 +217,8 @@ class VLMModel(Qwen3ForCausalLM):
     ) -> CausalLMOutputWithPast:
         with torch.no_grad():
             v_output = self.vit_model(pixel_values,output_hidden_states=True)
-            v_hidden_states = v_output.hidden_states[-1]
-            
+            v_hidden_states = torch.cat(v_output.hidden_states[-self.num_layers:],dim=2)
+
         outputs: BaseModelOutputWithPast = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,

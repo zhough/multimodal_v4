@@ -217,8 +217,9 @@ class VLMModel(Qwen3ForCausalLM):
     ) -> CausalLMOutputWithPast:
         with torch.no_grad():
             v_output = self.vit_model(pixel_values,output_hidden_states=True)
+            #合并最后3层的视觉信息并保持维度不变    
             v_hidden_states = torch.cat(v_output.hidden_states[-self.num_layers:],dim=2)
-
+            v_hidden_states = self.hidden_states_proj(v_hidden_states)
         outputs: BaseModelOutputWithPast = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,

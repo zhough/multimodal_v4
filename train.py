@@ -147,8 +147,8 @@ def init_model(tokenizer,config,trained_model=None,rank=0,total_steps=1000):
     #冻结视觉模块
     for name, param in model.vit_model.named_parameters():
         param.requires_grad = False
-        if rank == 0:
-            print(f'成功冻结: {name}')
+    if rank == 0:
+        print(f'成功冻结所有视觉模块参数')
     #冻结自注意力层和前馈层
     for name,param in model.model.named_parameters():
         param.requires_grad = False

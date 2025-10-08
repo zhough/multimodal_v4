@@ -64,9 +64,11 @@ class CrossAttention(nn.Module):
 class CrossDecoderLayer(Qwen3DecoderLayer):
     def __init__(self, config, layer_idx):
         super().__init__(config, layer_idx)
+        self.layer_index = layer_idx
         self.v_hidden_size = vconfig.v_hidden_size
-        self.cross_attn = CrossAttention(v_hidden_size=self.v_hidden_size,l_hidden_size=self.hidden_size)
-        self.cross_attention_layernorm =  Qwen3RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        if self.layer_index in vconfig.fusion_layers:
+            self.cross_attn = CrossAttention(v_hidden_size=self.v_hidden_size,l_hidden_size=self.hidden_size)
+            self.cross_attention_layernorm =  Qwen3RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -93,13 +95,13 @@ class CrossDecoderLayer(Qwen3DecoderLayer):
             **kwargs,
         )
         hidden_states = residual + hidden_states
-
-        if v_hidden_states is not None:
-            #Cross Attention
-            residual = hidden_states
-            hidden_states = self.cross_attention_layernorm(hidden_states)
-            hidden_states = self.cross_attn(v_hidden_states,hidden_states)
-            hidden_states = residual + hidden_states    
+        if self.layer_index in vconfig.fusion_layers:
+            if v_hidden_states is not None:
+                #Cross Attention
+                residual = hidden_states
+                hidden_states = self.cross_attention_layernorm(hidden_states)
+                hidden_states = self.cross_attn(v_hidden_states,hidden_states)
+                hidden_states = residual + hidden_states    
 
         # Fully Connected
         residual = hidden_states

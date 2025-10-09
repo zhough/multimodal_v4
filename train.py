@@ -242,10 +242,11 @@ def train_epoch(model, tokenizer, dataloader, optimizer, scheduler, scaler, conf
             swanlab.log({
                 f'step_loss': loss.item(),
             },step = config.step)
+            print(f'steps:{config.step},loss:{loss.item()}')
         if config.step % config.save_steps == 0 and rank == 0:
             model_path = config.save_model
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
-            torch.save(model.state_dict(),model_path)
+            torch.save(model.module.state_dict(),model_path)
             print(f'成功保存当前最新模型参数到{model_path}') 
     avg_loss = total_loss / len(dataloader)
         

@@ -64,7 +64,7 @@ class CrossAttention(nn.Module):
 class CrossDecoderLayer(Qwen3DecoderLayer):
     def __init__(self, config, layer_idx):
         super().__init__(config, layer_idx)
-        self.v_hidden_size = 768
+        self.v_hidden_size = vconfig.v_hidden_size
         self.cross_attn = CrossAttention(v_hidden_size=self.v_hidden_size,l_hidden_size=self.hidden_size)
         self.cross_attention_layernorm =  Qwen3RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
     def forward(

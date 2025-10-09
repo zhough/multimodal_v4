@@ -37,7 +37,7 @@ class Config():
         self.epochs = 1
         self.batch_size = 2
         self.learning_rate = 3e-5
-        self.min_learning_rate = 1e-7
+        self.min_learning_rate = 1e-6
         self.weight_decay = 1e-4
         self.step = 0
         self.layers_to_unfreeze = 2
@@ -53,6 +53,8 @@ class Config():
         self.val_json_file = '/kaggle/working/multimodal_v4/data_val.json'  
         self.save_model = './output/model.pth'
         self.best_model = './output/best_model.pth'
+        self.draw_steps = 100
+        self.save_steps = 4000
         self.trained_model = None
 config = Config()
 
@@ -236,11 +238,11 @@ def train_epoch(model, tokenizer, dataloader, optimizer, scheduler, scaler, conf
         scheduler.step()
         total_loss += loss.item()
 
-        if config.step % 200 == 0 and rank == 0:
+        if config.step % config.draw_steps == 0 and rank == 0:
             swanlab.log({
                 f'step_loss': loss.item(),
             },step = config.step)
-        if config.step % 2000 == 0 and rank == 0:
+        if config.step % config.save_steps == 0 and rank == 0:
             model_path = config.save_model
             os.makedirs(os.path.dirname(model_path), exist_ok=True)
             torch.save(model.state_dict(),model_path)
@@ -299,6 +301,8 @@ if __name__ == "__main__":
     parser.add_argument('--train_json_file',type=str,default=config.train_json_file,help='训练用json数据')
     parser.add_argument('--trained_model',type=str,default=config.trained_model,help='预训练模型路径')
     parser.add_argument('--save_model',type=str,default=config.save_model,help='模型保存路径')
+    parser.add_argument('--draw_steps',type=int,default=config.draw_steps,help='绘制损失的steps间隔')
+    parser.add_argument('--save_steps',type=int,default=config.save_steps,help='保存模型的steps间隔')
     args = parser.parse_args()
     for key, value in vars(args).items():
         if hasattr(config, key):

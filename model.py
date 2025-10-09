@@ -67,7 +67,9 @@ class CrossDecoderLayer(Qwen3DecoderLayer):
         self.layer_index = layer_idx
         self.v_hidden_size = vconfig.v_hidden_size
         if self.layer_index in vconfig.fusion_layers:
+            self.num_layers = vconfig.num_layers    
             self.cross_attn = CrossAttention(v_hidden_size=self.v_hidden_size,l_hidden_size=self.hidden_size)
+            self.hidden_states_proj = nn.Linear(vconfig.v_hidden_size*self.num_layers,vconfig.v_hidden_size)
             self.cross_attention_layernorm =  Qwen3RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
     def forward(
         self,
@@ -100,6 +102,7 @@ class CrossDecoderLayer(Qwen3DecoderLayer):
                 #Cross Attention
                 residual = hidden_states
                 hidden_states = self.cross_attention_layernorm(hidden_states)
+                v_hidden_states = self.hidden_states_proj(v_hidden_states)
                 hidden_states = self.cross_attn(v_hidden_states,hidden_states)
                 hidden_states = residual + hidden_states    
 
@@ -202,7 +205,6 @@ class VLMModel(Qwen3ForCausalLM):
         self.model = MyQwen3Model(config)
         self.vit_model = vit_model
         self.num_layers = vconfig.num_layers
-        self.hidden_states_proj = nn.Linear(vconfig.v_hidden_size*self.num_layers,vconfig.v_hidden_size)
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -221,7 +223,7 @@ class VLMModel(Qwen3ForCausalLM):
             v_output = self.vit_model(pixel_values,output_hidden_states=True)
             #合并最后3层的视觉信息并保持维度不变    
             v_hidden_states = torch.cat(v_output.hidden_states[-self.num_layers:],dim=2)
-            v_hidden_states = self.hidden_states_proj(v_hidden_states)
+            #v_hidden_states = self.hidden_states_proj(v_hidden_states)
         outputs: BaseModelOutputWithPast = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,

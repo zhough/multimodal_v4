@@ -154,10 +154,13 @@ def init_model(tokenizer,config,trained_model=None,rank=0,total_steps=1000):
         param.requires_grad = False
     if rank == 0:
         print('冻结所有llm模块')
-    for layer in model.model.layers:
-        cross_attn_module = layer.cross_attn
-        for name,param in cross_attn_module.named_parameters():
-            param.requires_grad = True
+    for layer_index,layer in enumerate(model.model.layers):
+        if layer_index in vconfig.fusion_layers:
+            cross_attn_module = layer.cross_attn
+            for name,param in cross_attn_module.named_parameters():
+                param.requires_grad = True
+            for name,param in layer.hidden_states_proj.named_parameters():
+                param.requires_grad = True
     if rank == 0:
         print(f'成功解冻交叉注意力层')
     #解冻最后4层

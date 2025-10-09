@@ -86,7 +86,7 @@ vconfig = VisionConfig()
 
 config = AutoConfig.from_pretrained(vconfig.llm)    
 vit_model = AutoModelForImageClassification.from_pretrained(vconfig.model_name)
-model = VLMModel(config,vit_model=vit_model)
+model = VLMModel(config,vit_model=vit_model).to(vconfig.device)
 
 for name,param in model.named_parameters():
          print(f"名称: {name:<80} | 形状: {param.shape}")
@@ -95,6 +95,40 @@ print('--------------------------------------------')
 total_num_params = sum(p.numel() for name, p in model.named_parameters())
 print(f"\n参数总数: {total_num_params:,}")
 
+for name, param in model.vit_model.named_parameters():
+    param.requires_grad = False
+print(f'成功冻结所有视觉模块参数')
+#冻结自注意力层和前馈层
+for name,param in model.model.named_parameters():
+    param.requires_grad = False
+print('冻结所有llm模块')
+for layer_index,layer in enumerate(model.model.layers):
+    if layer_index in vconfig.fusion_layers:
+        cross_attn_module = layer.cross_attn
+        for name,param in cross_attn_module.named_parameters():
+            param.requires_grad = True
+        for name,param in layer.hidden_states_proj.named_parameters():
+            param.requires_grad = True
+print(f'成功解冻交叉注意力层')
+#解冻最后4层
+# for layer in model.model.layers[-config.layers_to_unfreeze:]:
+#     for name,param in layer.named_parameters():
+#         param.requires_grad = True
+#print(f'成功解冻最后 {config.layers_to_unfreeze} 层')
+
+print("\n--- 可训练参数列表 (requires_grad=True) ---")
+trainable_params = [name for name, param in model.named_parameters() if param.requires_grad]
+    
+if not trainable_params:
+    print("警告：没有找到任何可训练的参数！")
+else:
+    for name in trainable_params:
+        print(name)
+    
+    # 计算并打印可训练参数的总数
+    total_trainable_params = sum(p.numel() for name, p in model.named_parameters() if p.requires_grad)
+    print(f"\n可训练参数总数: {total_trainable_params:,}")
+print("----------------------------------------")
 # for layer in model.model.layers:
 #     for name,param in layer.named_parameters():
 #         print(name)

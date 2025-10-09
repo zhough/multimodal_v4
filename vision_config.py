@@ -1,3 +1,4 @@
+import torch
 class VisionConfig():
     def __init__(self):
         self.model_name = "google/vit-base-patch16-224"
@@ -7,4 +8,4 @@ class VisionConfig():
         self.fusion_layers = [0,1,2,10,11,12,13,14,15,20,21,22]
         #self.fusion_layers = [i for i in range(0,28)]
         self.llm = "Qwen/Qwen3-0.6B"
-        self.device = 'cuda'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'

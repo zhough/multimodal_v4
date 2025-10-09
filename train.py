@@ -53,7 +53,7 @@ class Config():
         self.val_json_file = '/kaggle/working/multimodal_v4/data_val.json'  
         self.save_model = './output/model.pth'
         self.best_model = './output/best_model.pth'
-        self.trained_model = '/kaggle/input/vlm/transformers/default/1/model.pth'
+        self.trained_model = None
 config = Config()
 
 
@@ -112,7 +112,7 @@ class VLMDataset(Dataset):
 # dataset = ConversationDataset("output_data.json", tokenizer)
 # dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=lambda x: x) # 简单的 collate_fn
 
-def init_model(tokenizer,config,trained_model=None,rank=0,total_steps=1000):
+def init_model(tokenizer,config,rank=0,total_steps=1000):
     trained_model = config.trained_model
     lconfig = AutoConfig.from_pretrained(vconfig.llm)
     vit_model = AutoModelForImageClassification.from_pretrained(vconfig.model_name)

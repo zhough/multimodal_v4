@@ -36,7 +36,7 @@ class Config():
     def __init__(self):
         self.epochs = 1
         self.batch_size = 2
-        self.learning_rate = 1e-5
+        self.learning_rate = 3e-5
         self.min_learning_rate = 1e-7
         self.weight_decay = 1e-4
         self.step = 0
@@ -47,7 +47,7 @@ class Config():
         self.dist_url = "env://"
         self.local_rank = -1
         
-        self.swanlab_project_name = 'multimodal_v4'
+        self.swanlab_project_name = 'multimodal_v21'
         self.image_dir = '/kaggle/input/coco-2017-dataset/coco2017/train2017/'
         self.train_json_file = '/kaggle/input/multimodal-coco/coco.json'
         self.val_json_file = '/kaggle/working/multimodal_v4/data_val.json'  

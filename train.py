@@ -163,12 +163,12 @@ def init_model(tokenizer,config,rank=0,total_steps=1000):
                 param.requires_grad = True
     if rank == 0:
         print(f'成功解冻交叉注意力层')
-    #解冻最后4层
+    #解冻最后n层
     # for layer in model.model.layers[-config.layers_to_unfreeze:]:
     #     for name,param in layer.named_parameters():
     #         param.requires_grad = True
-    if rank == 0:
-        print(f'成功解冻最后 {config.layers_to_unfreeze} 层')
+    # if rank == 0:
+    #     print(f'成功解冻最后 {config.layers_to_unfreeze} 层')
 
     if rank == 0:
         print("\n--- 可训练参数列表 (requires_grad=True) ---")
@@ -296,6 +296,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs',type=int,default=config.epochs,help='epochs')
     parser.add_argument('--swanlab_project_name',type=str,default=config.swanlab_project_name,help='swanlab项目名')
     parser.add_argument('--image_dir',type=str,default=config.image_dir,help='训练图像文件夹路径')
+    parser.add_argument('--train_json_file',type=str,default=config.train_json_file,help='训练用json数据')
     parser.add_argument('--trained_model',type=str,default=config.trained_model,help='预训练模型路径')
     parser.add_argument('--save_model',type=str,default=config.save_model,help='模型保存路径')
     args = parser.parse_args()
